@@ -58,11 +58,12 @@ def build_dataset(words):
     # 取词频top50000的词放入字典
     count.extend(collections.Counter(words).most_common(vocabulary_size-1))
     
+    # 将top50000的词放入字典中，并按词频顺序编码
     dictionary = dict()   
     for word,_ in count:
         dictionary[word] = len(dictionary)
      
-    # 将字典中的词按词频顺序编码
+    # 将words中的词按词频顺序编码
     data = list()
     unk_count = 0
     for word in words:
@@ -74,13 +75,34 @@ def build_dataset(words):
         data.append(index)
     count[0][1] = unk_count
     
-    # 将字典反转
+    # 将字典中键值对换即 value:key
     reverse_dictionary = dict(zip(dictionary.values(), dictionary.keys()))
     return data, count, dictionary, reverse_dictionary
 
 data, count, dictionary, reverse_dictionary = build_dataset(words)
+
+
+del words
+print('Most common words (+UNK)', count[:5])
+print('Sample data', data[:10], [reverse_dictionary[i] for i in data[:10]])
         
-        
+
+"""
+# 生成训练样本（skip-gram）
+# batch_size   batch大小(必须为num_skips的整倍数，因为必须至少包含一个词的所有样本)
+# num_skips    每个词（content）生成多少样本 < 2*skip_window
+# skip_window  skip窗口大小
+"""
+data_index = 0
+def generate_batch(batch_size, num_skips, skip_window):
+    global data_index
+    assert batch_size % num_skips == 0
+    assert num_skips <= 2 * skip_window
+    batch = np.ndarray(shape=(batch_size), dtype=np.int32)
+    labels = np.ndarray(shape=(batch_size,1), dtype=np.int32)
+    span = 2 * skip_window + 1
+    buffer = collections.deque(maxlen=span)
+    
 
 
 
